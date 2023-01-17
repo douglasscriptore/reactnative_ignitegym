@@ -1,4 +1,4 @@
-import { VStack,Image, Text, Center, Heading, ScrollView } from "native-base";
+import { VStack,Image, Text, Center, Heading, ScrollView, useToast } from "native-base";
 
 import BackgoundImg from '@assets/background.png'
 import LogoSvg from '@assets/logo.svg'
@@ -8,6 +8,10 @@ import { useNavigation } from "@react-navigation/native";
 import { useForm, Controller } from "react-hook-form"
 import * as yup from "yup"
 import { yupResolver } from "@hookform/resolvers/yup"
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
+import { useState } from "react";
+import { useAuth } from "@hooks/useAuth";
 
 type FormDataProps = {
   name: string;
@@ -24,8 +28,11 @@ const singUpSchema = yup.object({
 })
 
 export function Signup() {
-
+    const [loading, setLoading] = useState(false)
+    const toast = useToast()
     const navigation = useNavigation()
+    const { signIn } = useAuth()
+
     const { control, handleSubmit, formState: { errors } } = useForm<FormDataProps>({
       resolver: yupResolver(singUpSchema)
     })
@@ -34,8 +41,25 @@ export function Signup() {
       navigation.goBack()
     }
 
-    function handleSignUp({name, email, password, password_confirm}: FormDataProps){
-      console.log(name, email, password, password_confirm)
+    async function handleSignUp({name, email, password}: FormDataProps){
+
+      try{
+        setLoading(true)
+        await api.post("users", { name, email, password })
+        await signIn(email, password)
+      }catch(error){
+          const isAppError = error instanceof AppError;
+          const title = isAppError ? error.message : "Não foi possivel criar a conta. Tente novamente mais tarde."
+
+          toast.show({
+            title,
+            placement: 'top',
+            bgColor: 'red.500'
+          })
+
+        setLoading(false)
+
+      }
     }
 
     return (
@@ -111,7 +135,7 @@ export function Signup() {
                       />
                     )}/>
 
-                    <Button title="Criar e acessar" onPress={handleSubmit(handleSignUp)}/>
+                    <Button title="Criar e acessar" onPress={handleSubmit(handleSignUp)} isLoading={loading}/>
                 </Center>
 
                 <Button
