@@ -20,7 +20,7 @@ export function Signin() {
     const [loading, setLoading] = useState(false)
 
     const navigation = useNavigation<AuthNavigatorRoutesProps>()
-    const { signIn } = useAuth()
+    const { singIn } = useAuth()
     const { control, handleSubmit, formState: { errors } } = useForm<FormData>()
     const toast = useToast()
 
@@ -32,10 +32,10 @@ export function Signin() {
     async function handleSignIn({email,password}: FormData){
         setLoading(true)
         try{
-            await signIn(email,password)    
+            await singIn(email,password)    
         }catch(error){
             const isAppError = error instanceof AppError;
-
+            console.log(error)
             const title = isAppError ? error.message : 'Não foi possivel entrar. Tente novamente mais tarde'
             setLoading(false)
             toast.show({
